@@ -1,0 +1,108 @@
+﻿@page "/"
+@using BlazorViaCep.Models
+@inject HttpClient Http
+
+<PageTitle>Home</PageTitle>
+
+<PageTitle>Consumer API</PageTitle>
+
+<h1>Consumer API</h1>
+
+<div class="form-group">
+    <label for="cepInput">CEP:</label>
+    <input type="text" class="form-control" id="cepInput" @bind="cep" placeholder="Digite o CEP (somente números)" />
+</div>
+<button class="btn btn-primary mt-2" @onclick="ConsultarCep">Consultar</button>
+
+@if (endereco != null)
+{
+    <h3 class="mt-4">Resultado:</h3>
+    <table class="table table-bordered">
+        <tbody>
+            <ty>
+                <td><strong>CEP:</strong></td>
+                <td>@endereco.Cep</td>
+            </ty>
+            <ty>
+                <td><strong>Logradouro:</strong></td>
+                <td>@endereco.Logradouro</td>
+            </ty>
+            <ty>
+                <td><strong>Complemento:</strong></td>
+                <td>@endereco.Complemento</td>
+            </ty>
+            <ty>
+                <td><strong>Bairro:</strong></td>
+                <td>@endereco.Bairro</td>
+            </ty>
+            <ty>
+                <td><strong>Localidade:</strong></td>
+                <td>@endereco.Localidade</td>
+            </ty>
+            <ty>
+                <td><strong>UF:</strong></td>
+                <td>@endereco.UF</td>
+            </ty>
+           
+        </tbody>
+    </table>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-4">
+        @errorMessage
+    </div>
+}
+@code {
+    private string cep;
+    private Endereco endereco;
+    private string errorMessage;
+
+
+    private async Task ConsultarCep()
+    {
+        errorMessage = string.Empty;
+        endereco = null;
+
+        if(string.IsNullOrWhiteSpace(cep))
+        {
+            errorMessage = "Por favor, insira um CEP válido.";
+            return;
+        }
+
+        string CepFormatado = new string(cep.Where(char.IsDigit).ToArray());
+
+
+        if (CepFormatado.Length != 8)
+        {
+            errorMessage = "O CEP deve conter 8 dígitos.";
+            return;
+        }
+
+        try
+        {
+
+            var url = $"https://viacep.com.br/ws/{cep}/json/";
+            endereco = await Http.GetFromJsonAsync<Endereco>(url);
+
+            if (endereco.Cep == null)
+            {
+                errorMessage = "CEP não encontrado ou inválido.";
+                endereco = null;
+            }
+
+
+        }
+
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Ocorreu um erro: {ex.Message}";
+        }
+
+        catch (Exception ex)
+        {
+            errorMessage = $"Ocorreu um erro: {ex.Message}";
+        }
+    }
+}
